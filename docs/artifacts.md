@@ -11,6 +11,8 @@
 
 ## До окремих уроків
 
+- [Рівність і копіювання](https://claude.ai/artifact/MV2PmAJGC8B5ENPb6RLH8m): теорія до фази 0, дня 1
+  (значення й посилання). `Object.is()`, spread, `structuredClone()`, розділ 2.7 HTML Standard, що обирати.
 - [Spread, rest і деструктуризація](https://claude.ai/artifact/7CufLP1wWQpKps6KfwDBsP): довідка до фази 0, дня 1
   (значення й посилання). Три ролі знака `...`, поверхнева копія, крайні випадки, підводні камені.
 
