@@ -1,0 +1,8 @@
+{
+  "name": "f0-d04",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "minimatch": "^11.0.3"
+  }
+}
