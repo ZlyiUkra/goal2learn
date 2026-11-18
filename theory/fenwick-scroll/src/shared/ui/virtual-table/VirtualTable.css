@@ -1,0 +1,18 @@
+.table-viewport {
+  box-sizing: border-box;
+  overflow: auto;
+  overflow-anchor: none;
+  border: 1px solid var(--color-border);
+  background: var(--color-panel);
+}
+
+.table-content {
+  position: relative;
+}
+
+/* Клітинка має розмір свого рядка і колонки; вміст, що більший за неї, обрізається. */
+.table-cell {
+  position: absolute;
+  overflow: hidden;
+  display: flex;
+}

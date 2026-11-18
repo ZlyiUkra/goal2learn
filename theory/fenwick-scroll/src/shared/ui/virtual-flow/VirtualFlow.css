@@ -1,0 +1,21 @@
+/* Браузер уміє сам тримати вміст на місці під час зміни розмірів (scroll anchoring).
+   Розкладка робить це сама через дерево Фенвіка, тому вбудований механізм вимкнено,
+   щоб два механізми не поправляли скрол одночасно. */
+.flow-viewport {
+  box-sizing: border-box;
+  overflow: auto;
+  overflow-anchor: none;
+  border: 1px solid var(--color-border);
+  background: var(--color-panel);
+}
+
+.flow-content {
+  position: relative;
+}
+
+/* Елемент розкладки не має заданого розміру: він рівно такий, як його вміст.
+   Саме цей розмір міряє ResizeObserver. */
+.flow-item {
+  position: absolute;
+  display: flex;
+}
