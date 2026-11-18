@@ -1,7 +1,7 @@
 import React from 'react';
 import { VirtualTable, useGridLayout } from '@/shared/ui/virtual-table';
 import { ResizableFrame } from '@/shared/ui/resizable-frame';
-import { demo } from '../model/tiles.js';
+import { demo } from '../config/demo.js';
 import { tableTileAt, tableRowSize, tableColSize } from '../model/table.js';
 import { useDemo, useBuildTime } from '../model/demo-context.js';
 

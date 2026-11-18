@@ -1,6 +1,6 @@
 import React from 'react';
-import { Logo } from './Logo.jsx';
-import { ThemeIcon } from './ThemeIcon.jsx';
+import { Logo } from '@/shared/ui/logo';
+import { ThemeIcon } from '@/shared/ui/theme-icon';
 import './AppLayout.css';
 
 // Каркас застосунку: шапка з логотипом, меню і перемикачем теми, під нею - сторінка.

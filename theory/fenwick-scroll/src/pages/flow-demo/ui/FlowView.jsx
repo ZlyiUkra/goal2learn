@@ -1,7 +1,8 @@
 import React from 'react';
 import { VirtualFlow } from '@/shared/ui/virtual-flow';
 import { ResizableFrame } from '@/shared/ui/resizable-frame';
-import { demo, tileAt, tilesAreaFor, mosaicWidthFor } from '../model/tiles.js';
+import { demo } from '../config/demo.js';
+import { tileAt, tilesAreaFor, mosaicWidthFor } from '../model/tiles.js';
 import { useDemo } from '../model/demo-context.js';
 import { BuildLoader } from './BuildLoader.jsx';
 
