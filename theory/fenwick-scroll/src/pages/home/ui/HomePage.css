@@ -1,0 +1,204 @@
+/* Вступ набраний як сторінка книжки: вузька колонка тексту посередині. */
+.book {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 32px 24px 64px;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.book section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.book h3 {
+  margin-top: 8px;
+}
+
+.book ol {
+  margin: 0;
+  padding-left: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.book-head {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  text-align: center;
+}
+
+.book-kicker {
+  font-variant: small-caps;
+  letter-spacing: 0.2em;
+  color: var(--color-second);
+}
+
+.book-lead {
+  font-style: italic;
+  font-size: 16px;
+  color: var(--color-muted);
+}
+
+/* Таблиця комірок: номер, двійковий запис, найменший біт, які елементи масиву, сума. */
+.bits-table {
+  display: grid;
+  border: 1px solid var(--color-border);
+  border-radius: 3px;
+  background: var(--color-surface);
+}
+
+.bits-row {
+  display: grid;
+  grid-template-columns: 70px 70px 100px 1fr 60px;
+  gap: 8px;
+  align-items: center;
+  padding: 3px 12px;
+}
+
+.bits-row + .bits-row {
+  border-top: 1px solid var(--color-border);
+}
+
+.bits-head {
+  font-variant: small-caps;
+  letter-spacing: 0.05em;
+  font-size: 12px;
+  color: var(--color-muted);
+}
+
+.bits-sum {
+  text-align: right;
+  font: 600 18px var(--font-display);
+}
+
+/* Смужка з елементів масиву: колір каже, який крок суми покриває елемент;
+   бліді елементи в суму не входять. */
+.strip {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 4px;
+}
+
+.strip-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 6px 2px;
+  border: 1px solid var(--color-border);
+  border-radius: 3px;
+  font-size: 12px;
+}
+
+.strip-cell code {
+  font-size: 11px;
+  color: inherit;
+}
+
+.strip-out {
+  opacity: 0.4;
+}
+
+.strip-mark {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  vertical-align: baseline;
+}
+
+.strip-step-0 {
+  background: var(--color-accent-soft);
+  border-color: var(--color-accent);
+}
+
+.strip-step-1 {
+  background: var(--color-second-soft);
+  border-color: var(--color-second);
+}
+
+.strip-step-2 {
+  background: var(--color-third-soft);
+  border-color: var(--color-third);
+}
+
+.strip-mark.strip-step-0 {
+  background: var(--color-accent);
+}
+
+.strip-mark.strip-step-1 {
+  background: var(--color-second);
+}
+
+.strip-mark.strip-step-2 {
+  background: var(--color-third);
+}
+
+.try-field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-style: italic;
+  color: var(--color-muted);
+}
+
+.try-field input {
+  width: 80px;
+  padding: 2px 6px;
+  border: 1px solid var(--color-border);
+  border-radius: 3px;
+  background: var(--color-surface);
+}
+
+.steps .step-yes::marker {
+  color: var(--color-second);
+}
+
+.steps .step-no {
+  color: var(--color-muted);
+}
+
+.open-mode {
+  align-self: flex-start;
+  padding: 4px 12px;
+  border: 1px solid var(--color-accent);
+  border-radius: 3px;
+  background: none;
+  font-variant: small-caps;
+  letter-spacing: 0.06em;
+  color: var(--color-accent);
+  cursor: pointer;
+}
+
+.open-mode:hover {
+  background: var(--color-accent-soft);
+}
+
+details {
+  padding: 8px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 3px;
+  background: var(--color-surface);
+}
+
+details summary {
+  cursor: pointer;
+  font-style: italic;
+}
+
+details p {
+  margin-top: 8px;
+}
+
+/* Короткий код на кшталт tree[i + 1] не розривається на два рядки. */
+.book p code,
+.book li code {
+  white-space: nowrap;
+}

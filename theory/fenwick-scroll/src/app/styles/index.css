@@ -1,0 +1,181 @@
+/* Кольори. Спершу палітра (назви за кольором), потім ролі (назви за призначенням):
+   компоненти беруть лише ролі, тож тема міняє тільки відповідність ролей палітрі. */
+:root {
+  --color-blush-paper: #fbf6f3;
+  --color-blush-surface: #fffdfb;
+  --color-blush-panel: #f6edf0;
+  --color-blush-line: #e8d8de;
+  --color-plum-ink: #3a2832;
+  --color-plum-muted: #7c6370;
+  --color-rose: #b0527a;
+  --color-rose-soft: #f4e2e9;
+  --color-sage: #6f9079;
+  --color-sage-soft: #e3ece5;
+  --color-peach: #c47a4a;
+  --color-peach-soft: #f6e5d8;
+  --color-mauve-dark: #8a6f7d;
+
+  --color-aubergine-night: #1d181d;
+  --color-aubergine-surface: #241e24;
+  --color-aubergine-panel: #2b232b;
+  --color-aubergine-line: #473842;
+  --color-pearl: #f0e5ea;
+  --color-pearl-muted: #bba6b1;
+  --color-rose-light: #e892b3;
+  --color-rose-deep: #3d2733;
+  --color-sage-light: #9fc0a8;
+  --color-sage-deep: #263329;
+  --color-peach-light: #e7a77c;
+  --color-peach-deep: #3b2a20;
+
+  --font-display: 'Cormorant Garamond', 'Cormorant', Garamond, 'Times New Roman', serif;
+  --font-text: Literata, Georgia, Cambria, 'Times New Roman', serif;
+}
+
+:root,
+:root[data-theme='light'] {
+  --color-page: var(--color-blush-paper);
+  --color-surface: var(--color-blush-surface);
+  --color-panel: var(--color-blush-panel);
+  --color-border: var(--color-blush-line);
+  --color-text: var(--color-plum-ink);
+  --color-muted: var(--color-plum-muted);
+  --color-accent: var(--color-rose);
+  --color-accent-soft: var(--color-rose-soft);
+  --color-second: var(--color-sage);
+  --color-second-soft: var(--color-sage-soft);
+  --color-third: var(--color-peach);
+  --color-third-soft: var(--color-peach-soft);
+  --color-handle: var(--color-mauve-dark);
+  --color-tile-text: var(--color-plum-ink);
+  --color-icon-sun: oklch(0.84 0.14 80);
+  --color-icon-moon: oklch(0.86 0.06 300);
+  --color-icon-cheek: oklch(0.75 0.13 10 / 0.7);
+  --color-icon-face: var(--color-plum-ink);
+  /* Каже браузеру малювати смуги прокрутки й поля введення світлими. */
+  color-scheme: light;
+}
+
+/* Темна тема: коли людина обрала її сама, або коли тему не обрано, а система темна. */
+:root[data-theme='dark'] {
+  --color-page: var(--color-aubergine-night);
+  --color-surface: var(--color-aubergine-surface);
+  --color-panel: var(--color-aubergine-panel);
+  --color-border: var(--color-aubergine-line);
+  --color-text: var(--color-pearl);
+  --color-muted: var(--color-pearl-muted);
+  --color-accent: var(--color-rose-light);
+  --color-accent-soft: var(--color-rose-deep);
+  --color-second: var(--color-sage-light);
+  --color-second-soft: var(--color-sage-deep);
+  --color-third: var(--color-peach-light);
+  --color-third-soft: var(--color-peach-deep);
+  --color-handle: var(--color-pearl-muted);
+  --color-tile-text: var(--color-plum-ink);
+  --color-icon-sun: oklch(0.84 0.14 80);
+  --color-icon-moon: oklch(0.88 0.06 300);
+  --color-icon-cheek: oklch(0.75 0.13 10 / 0.7);
+  --color-icon-face: var(--color-plum-ink);
+  color-scheme: dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --color-page: var(--color-aubergine-night);
+    --color-surface: var(--color-aubergine-surface);
+    --color-panel: var(--color-aubergine-panel);
+    --color-border: var(--color-aubergine-line);
+    --color-text: var(--color-pearl);
+    --color-muted: var(--color-pearl-muted);
+    --color-accent: var(--color-rose-light);
+    --color-accent-soft: var(--color-rose-deep);
+    --color-second: var(--color-sage-light);
+    --color-second-soft: var(--color-sage-deep);
+    --color-third: var(--color-peach-light);
+    --color-third-soft: var(--color-peach-deep);
+  --color-second-soft: var(--color-sage-deep);
+  --color-third: var(--color-peach-light);
+  --color-third-soft: var(--color-peach-deep);
+    --color-handle: var(--color-pearl-muted);
+    --color-tile-text: var(--color-plum-ink);
+    --color-icon-sun: oklch(0.84 0.14 80);
+    --color-icon-moon: oklch(0.88 0.06 300);
+    --color-icon-cheek: oklch(0.75 0.13 10 / 0.7);
+    --color-icon-face: var(--color-plum-ink);
+    color-scheme: dark;
+  }
+}
+
+body {
+  margin: 0;
+  background: var(--color-page);
+  color: var(--color-text);
+  font: 14px/1.6 var(--font-text);
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  line-height: 1.15;
+  margin: 0;
+}
+
+h1 {
+  font-size: 34px;
+  font-style: italic;
+}
+
+h2 {
+  font-size: 24px;
+  font-style: italic;
+  color: var(--color-accent);
+}
+
+h3 {
+  font-size: 18px;
+}
+
+p {
+  margin: 0;
+}
+
+code {
+  font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+  font-size: 0.9em;
+  color: var(--color-accent);
+}
+
+button,
+input {
+  font: inherit;
+  color: inherit;
+}
+
+/* Квітковий розділювач між розділами: тонка лінія з квіткою посередині. */
+.flourish {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--color-accent);
+}
+
+.flourish::before,
+.flourish::after {
+  content: '';
+  flex: 1;
+  border-top: 1px solid var(--color-border);
+}
+
+.flourish span::before {
+  content: '\2766';
+  font-size: 16px;
+}
+
+/* Виділений абзац: числа й висновки, на які варто подивитися. */
+.callout {
+  padding: 10px 14px;
+  border-left: 3px solid var(--color-accent);
+  background: var(--color-accent-soft);
+}

@@ -1,0 +1,210 @@
+/* Сторінка режимів: вузька колонка з формою зліва, решта - режим. */
+.demo {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 220px 1fr;
+}
+
+.demo-aside {
+  padding: 24px 18px;
+  border-right: 1px solid var(--color-border);
+  background: var(--color-surface);
+}
+
+.demo-form {
+  position: sticky;
+  top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.demo-form h3 {
+  font-style: italic;
+  color: var(--color-accent);
+}
+
+.demo-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-variant: small-caps;
+  letter-spacing: 0.06em;
+  color: var(--color-muted);
+}
+
+.demo-field input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 4px 8px;
+  border: 1px solid var(--color-border);
+  border-radius: 3px;
+  background: var(--color-page);
+  font-variant: normal;
+  letter-spacing: normal;
+  color: var(--color-text);
+}
+
+.demo-field input:focus {
+  outline: 1px solid var(--color-accent);
+  border-color: var(--color-accent);
+}
+
+.demo-count strong {
+  color: var(--color-accent);
+}
+
+.demo-hint {
+  font-size: 12px;
+  font-style: italic;
+  color: var(--color-muted);
+}
+
+.demo-main {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 24px 28px;
+  min-width: 0;
+}
+
+.demo-lead {
+  max-width: 760px;
+  font-size: 15px;
+}
+
+.status {
+  max-width: 760px;
+  font-size: 13px;
+}
+
+/* Сцена, на якій стоїть вікно. Вікно позиціонується відносно неї. */
+.stage {
+  position: relative;
+  height: calc(100vh - 300px);
+  min-height: 460px;
+}
+
+/* Лоудер на місці поля плиток, поки число в полі сторони ще змінюється або поле будується.
+   Кільце крутиться через transform: таку анімацію браузер веде окремо від JavaScript, тож
+   кільце крутиться й тоді, коли сторінка зайнята побудовою розкладки. */
+.demo-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  font-style: italic;
+  color: var(--color-muted);
+}
+
+/* Кільце й секунди лежать в одній клітинці сітки, тож число стоїть посередині кільця. */
+.loader {
+  display: grid;
+  place-items: center;
+}
+
+.loader > * {
+  grid-area: 1 / 1;
+}
+
+.loader-ring {
+  width: 56px;
+  height: 56px;
+  box-sizing: border-box;
+  border: 3px solid var(--color-accent-soft);
+  border-top-color: var(--color-accent);
+  border-radius: 50%;
+  animation: loader-turn 0.9s linear infinite;
+}
+
+.loader-time {
+  display: flex;
+  transform: translateX(-0.5ch);
+  animation: loader-time-widen 100s steps(1, end) forwards;
+  font: 600 15px/1 var(--font-text);
+  font-style: normal;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text);
+}
+
+/* Сотні: прозорі перші 100 с, потім видимі. steps(1, end) тримає початкове значення до кінця
+   анімації, а forwards лишає кінцеве після неї. */
+.loader-hundreds {
+  opacity: 0;
+  animation: loader-hundreds-show 100s steps(1, end) forwards;
+}
+
+@keyframes loader-hundreds-show {
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes loader-time-widen {
+  to {
+    transform: translateX(0);
+  }
+}
+
+/* Лоудер поверх поля плиток: закриває всю сцену разом із вікном, тож вікно не потягнути,
+   поки мозаїка перекладається. */
+.demo-loading-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: var(--color-page);
+}
+
+/* Віконце однієї цифри і стрічка з десяти цифр у ньому. steps(10) зсуває стрічку стрибками
+   на одну цифру (на десяту частину її висоти), без плавного прокручування між ними. */
+.wheel {
+  display: inline-block;
+  height: 1em;
+  overflow: hidden;
+}
+
+.wheel-strip {
+  display: flex;
+  flex-direction: column;
+  animation: wheel-turn 1s steps(10) infinite;
+}
+
+.wheel-face {
+  height: 1em;
+  text-align: center;
+}
+
+@keyframes wheel-turn {
+  to {
+    transform: translateY(-100%);
+  }
+}
+
+@keyframes loader-turn {
+  to {
+    transform: rotate(1turn);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loader-ring {
+    animation: none;
+  }
+}
+
+.tile {
+  display: flex;
+  align-items: flex-start;
+  padding: 2px 4px;
+  border: 0;
+  color: var(--color-tile-text);
+  font: 10px/1.2 var(--font-text);
+  cursor: pointer;
+}
+
+/* Плитка у фокусі (після кліку або з клавіатури) обведена тонкою лінією акценту. */
+.tile:focus {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
+}
