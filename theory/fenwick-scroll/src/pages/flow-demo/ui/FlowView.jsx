@@ -1,19 +1,20 @@
 import React from 'react';
-import { flushSync } from 'react-dom';
 import { VirtualFlow } from '@/shared/ui/virtual-flow';
 import { ResizableFrame } from '@/shared/ui/resizable-frame';
 import { demo, tileAt, tilesAreaFor, mosaicWidthFor } from '../model/tiles.js';
-import { useDemo, useBuildTime } from '../model/demo-context.js';
-import { afterPaint } from '../lib/after-paint.js';
+import { useDemo } from '../model/demo-context.js';
 import { BuildLoader } from './BuildLoader.jsx';
 
 // Режими лінійок і мозаїки: side x side плиток у VirtualFlow.
 // Сторінка дає компоненту key з режимом і стороною, тому зміна будь-чого з них створює
 // розкладку заново, а збільшені плитки скидаються.
 export function FlowView({ mode }) {
-  const { side, frame, setFrame, layoutFrame, relayout, onResizeEnd, buildMs } = useDemo();
-  // У "Скомбіновано" мозаїка перекладається, коли змінюється layoutFrame; цей час теж міряємо.
-  useBuildTime(mode === 'combined' ? layoutFrame : null);
+  // Відлік часу побудови. mountedAt - перший рендер: з нього починається перша побудова.
+  // startRef - початок побудови мозаїки, що йде зараз; null, коли вона не йде.
+  const [mountedAt] = React.useState(() => performance.now());
+  const startRef = React.useRef(mountedAt);
+  const { side, frame, setFrame, layoutFrame, onResizeEnd, buildMs, setBuildMs } = useDemo();
+  const packed = mode === 'combined' || mode === 'fixed';
   const count = side * side;
   const horizontal = mode === 'horizontal';
   const [grown, setGrown] = React.useState(() => new Set());
@@ -47,36 +48,36 @@ export function FlowView({ mode }) {
     return { width: tile.width + demo.gap * 2, height: tile.height + demo.gap * 2 };
   };
 
-  const packed = mode === 'combined' || mode === 'fixed';
-  // regrowing - плитку клацнули, і мозаїка перекладається під її новий розмір.
-  const [regrowing, setRegrowing] = React.useState(false);
+  // Лінійки будуються одразу, тому їхній час - від першого рендеру до появи в DOM.
+  React.useLayoutEffect(() => {
+    if (!packed) setBuildMs(performance.now() - mountedAt);
+  }, [packed, setBuildMs, mountedAt]);
 
-  const toggleGrown = (i) => {
+  // Мозаїку VirtualFlow будує частинами і каже, коли почав і закінчив (busy). Поки busy,
+  // поверх поля стоїть лоудер. built - мозаїку вже хоч раз побудовано: далі лоудер каже не
+  // "будую", а "перекладаю" (після кліку по плитці або нових пропорцій вікна).
+  const [busy, setBusy] = React.useState(packed);
+  const [built, setBuilt] = React.useState(false);
+  const handleBusyChange = React.useCallback(
+    (nowBusy) => {
+      setBusy(nowBusy);
+      if (nowBusy) {
+        if (startRef.current === null) startRef.current = performance.now();
+        return;
+      }
+      if (startRef.current !== null) setBuildMs(performance.now() - startRef.current);
+      startRef.current = null;
+      setBuilt(true);
+    },
+    [setBuildMs],
+  );
+
+  const toggle = (i) => {
     setGrown((previous) => {
       const next = new Set(previous);
       if (next.has(i)) next.delete(i);
       else next.add(i);
       return next;
-    });
-  };
-
-  // У лінійках новий розмір плитки перекладає лише її лінійку і ті, що нижче, - це швидко.
-  // У мозаїці новий розмір перекладає всю мозаїку заново (для мільйона плиток - хвилина),
-  // тому спершу з'являється лоудер поверх поля, і лише потім плитка змінює розмір:
-  //   1. afterPaint чекає, поки лоудер з'явиться на екрані.
-  //   2. flushSync одразу записує новий розмір плитки в DOM. Браузер міряє плитку перед
-  //      малюванням наступного кадру, і VirtualFlow перекладає мозаїку в ResizeObserver.
-  //   3. Другий afterPaint спрацьовує після цього кадру, тобто вже після перекладання,
-  //      і прибирає лоудер.
-  const toggle = (i) => {
-    if (!packed) {
-      toggleGrown(i);
-      return;
-    }
-    setRegrowing(true);
-    afterPaint(() => {
-      flushSync(() => toggleGrown(i));
-      afterPaint(() => setRegrowing(false));
     });
   };
 
@@ -93,7 +94,7 @@ export function FlowView({ mode }) {
         {mosaicWidth
           ? ` Мозаїка ${mosaicWidth} x ${range.total} px, вікно показує x = ${range.crossFrom}..${range.crossTo}.`
           : ` Довжина вмісту ${range.total} px.`}
-        {buildMs === null ? '' : ` Поле побудовано за ${(buildMs / 1000).toFixed(2)} с.`}
+        {buildMs === null || busy ? '' : ` Поле побудовано за ${(buildMs / 1000).toFixed(2)} с.`}
       </p>
       <div className="stage">
         <ResizableFrame rect={frame} onResize={setFrame} onResizeEnd={onResizeEnd}>
@@ -107,6 +108,7 @@ export function FlowView({ mode }) {
             height={frame.height}
             overscan={demo.overscan}
             onRangeChange={setRange}
+            onBusyChange={handleBusyChange}
             renderItem={(i) => {
               const { width, height } = sizeOf(i);
               return (
@@ -123,7 +125,12 @@ export function FlowView({ mode }) {
             }}
           />
         </ResizableFrame>
-        {relayout || regrowing ? <BuildLoader side={side} overlay /> : null}
+        {busy ? (
+          <BuildLoader
+            overlay
+            text={`${built ? 'Перекладаю мозаїку' : 'Будую мозаїку'} ${side} x ${side} плиток...`}
+          />
+        ) : null}
       </div>
     </>
   );

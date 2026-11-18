@@ -125,3 +125,29 @@ test('visibleItems з вікном по обох осях: кожен елеме
     }
   }
 });
+
+test('побудова частинами: покинута нічого не змінює, доведена до кінця - як одним махом', () => {
+  const cross = randomSizes(3000, 20, 90);
+  const main = randomSizes(3000, 20, 90);
+  const whole = new SkylineLayout(cross, main, 700);
+  const parts = new SkylineLayout(cross, main, 700, { deferred: true });
+  assert.equal(parts.total(), 0);
+  // Кілька кроків і покинули: масиви ще порожні.
+  const abandoned = parts.placeSteps();
+  for (let k = 0; k < 3; k += 1) abandoned.next();
+  assert.equal(parts.total(), 0);
+  // Нова побудова до кінця дає те саме, що й одним махом.
+  const steps = parts.placeSteps();
+  let count = 0;
+  while (!steps.next().done) count += 1;
+  assert.ok(count > 1, 'генератор має зупинятися по дорозі');
+  assert.deepEqual([...parts.mains], [...whole.mains]);
+  assert.deepEqual([...parts.crosses], [...whole.crosses]);
+  // deferred: applySizes міняє розміри, але кладе елементи лише placeSteps.
+  const before = [...parts.mains];
+  assert.ok(parts.applySizes([{ index: 5, cross: 300, main: 300 }]));
+  assert.deepEqual([...parts.mains], before);
+  parts.place();
+  whole.applySizes([{ index: 5, cross: 300, main: 300 }]);
+  assert.deepEqual([...parts.mains], [...whole.mains]);
+});

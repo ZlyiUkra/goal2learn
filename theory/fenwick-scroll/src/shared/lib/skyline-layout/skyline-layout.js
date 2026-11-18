@@ -20,7 +20,15 @@
 //
 // Що скільки коштує: будь-яка зміна розміру або довжини лінійки перекладає всі елементи
 // заново. Місце елемента залежить від усіх, хто ліг раніше, тому частково перекласти не вийде.
-// Для 10 000 елементів це кілька десятків мілісекунд.
+// Для 10 000 елементів це кілька десятків мілісекунд, для мільйона - від секунд до хвилини.
+//
+// Побудова частинами. placeSteps() - генератор: він кладе елементи і після кожних stepSize
+// елементів віддає керування (yield). Той, хто його крутить, може робити паузи між кроками,
+// щоб браузер встиг обробити кліки й намалювати кадр, або покинути генератор на півдорозі.
+// Генератор пише в нові масиви і ставить їх на місце лише в самому кінці. Тому покинута
+// побудова нічого не псує: розкладка лишається такою, як до неї.
+// Розкладка з { deferred: true } сама не кладе елементи - ні при створенні, ні в applySizes
+// і setLineLength. Тоді placeSteps() має крутити той, хто її створив.
 //
 // Пошук видимих. Верхи елементів не зростають по порядку: елемент 5 може лежати
 // вище за елемент 4. Тому замість дерева Фенвіка - два масиви, які зростають завжди:
@@ -46,10 +54,12 @@ const firstWhere = (values, passes) => {
 };
 
 const bandSize = 256;
+const stepSize = 512;
 
 export class SkylineLayout {
-  constructor(crossSizes, mainSizes, lineLength) {
+  constructor(crossSizes, mainSizes, lineLength, { deferred = false } = {}) {
     this.flow = new FlowLayout(crossSizes, mainSizes, lineLength);
+    this.deferred = deferred;
     this.count = crossSizes.length;
     this.mains = new Float64Array(this.count);
     this.crosses = new Float64Array(this.count);
@@ -57,7 +67,7 @@ export class SkylineLayout {
     this.crossSizes = new Float64Array(this.count);
     this.lowestBottom = new Float64Array(this.count);
     this.highestTop = new Float64Array(this.count);
-    this.place();
+    if (!deferred) this.place();
   }
 
   get lineLength() {
@@ -68,18 +78,27 @@ export class SkylineLayout {
     return this.flow.lineCount;
   }
 
-  // Кладе всі елементи по черзі: лінійка за лінійкою, у лінійці - від початку до кінця.
+  // Кладе всі елементи одним махом.
   place() {
+    const steps = this.placeSteps();
+    while (!steps.next().done);
+  }
+
+  // Кладе всі елементи по черзі: лінійка за лінійкою, у лінійці - від початку до кінця.
+  // Генератор: зупиняється після кожних stepSize елементів, див. "Побудова частинами" вгорі.
+  *placeSteps() {
     const { flow } = this;
     const width = Math.max(1, Math.ceil(flow.lineLength));
     const skyline = new SegmentTree(width);
-    const sizes = this.crossSizes;
+    const mains = new Float64Array(this.count);
+    const crosses = new Float64Array(this.count);
+    const sizes = new Float64Array(this.count);
     // bands[b] - номери покладених елементів, чий низ лежить у смузі b (від b * bandSize).
     const bands = [];
     let tallest = 0;
 
-    const bottomOf = (j) => this.mains[j] + flow.mainSizes[j];
-    const rightOf = (j) => this.crosses[j] + sizes[j];
+    const bottomOf = (j) => mains[j] + flow.mainSizes[j];
+    const rightOf = (j) => crosses[j] + sizes[j];
 
     // Крок вліво: найправіший край серед елементів, що стоять на тій самій висоті
     // [top, top + height) і повністю лівіше за x. До нього елемент і доїде; 0, якщо таких немає.
@@ -90,7 +109,7 @@ export class SkylineLayout {
       const last = Math.floor((top + height + tallest) / bandSize);
       for (let b = Math.floor(top / bandSize); b <= last && b < bands.length; b += 1) {
         for (const j of bands[b] ?? []) {
-          if (bottomOf(j) > top && this.mains[j] < top + height && rightOf(j) <= x) stop = Math.max(stop, rightOf(j));
+          if (bottomOf(j) > top && mains[j] < top + height && rightOf(j) <= x) stop = Math.max(stop, rightOf(j));
         }
       }
       return stop;
@@ -104,7 +123,7 @@ export class SkylineLayout {
         let stop = -1;
         for (const j of bands[b] ?? []) {
           const bottom = bottomOf(j);
-          if (bottom <= top && this.crosses[j] < x + w && rightOf(j) > x) stop = Math.max(stop, bottom);
+          if (bottom <= top && crosses[j] < x + w && rightOf(j) > x) stop = Math.max(stop, bottom);
         }
         if (stop >= 0) return stop;
       }
@@ -130,34 +149,45 @@ export class SkylineLayout {
           x = left;
           top = up;
         }
-        this.mains[i] = top;
-        this.crosses[i] = x;
+        mains[i] = top;
+        crosses[i] = x;
         skyline.raise(...span(x), top + height);
         const band = Math.floor((top + height) / bandSize);
         while (bands.length <= band) bands.push([]);
         bands[band].push(i);
         tallest = Math.max(tallest, height);
         cross += size;
+        if (i % stepSize === stepSize - 1) yield;
       }
     }
+    const lowestBottom = new Float64Array(this.count);
+    const highestTop = new Float64Array(this.count);
     for (let i = 0; i < this.count; i += 1) {
-      const bottom = this.mains[i] + this.flow.mainSizes[i];
-      this.lowestBottom[i] = i === 0 ? bottom : Math.max(this.lowestBottom[i - 1], bottom);
+      const bottom = mains[i] + flow.mainSizes[i];
+      lowestBottom[i] = i === 0 ? bottom : Math.max(lowestBottom[i - 1], bottom);
     }
     for (let i = this.count - 1; i >= 0; i -= 1) {
-      this.highestTop[i] = i === this.count - 1 ? this.mains[i] : Math.min(this.highestTop[i + 1], this.mains[i]);
+      highestTop[i] = i === this.count - 1 ? mains[i] : Math.min(highestTop[i + 1], mains[i]);
     }
+    // Побудова дійшла до кінця: нові масиви стають розкладкою.
+    this.mains = mains;
+    this.crosses = crosses;
+    this.crossSizes = sizes;
+    this.lowestBottom = lowestBottom;
+    this.highestTop = highestTop;
   }
 
+  // Обидва методи кажуть, чи щось змінилося. Якщо deferred, перекласти елементи має той,
+  // хто створив розкладку, через placeSteps().
   applySizes(changes) {
     if (!this.flow.applySizes(changes)) return false;
-    this.place();
+    if (!this.deferred) this.place();
     return true;
   }
 
   setLineLength(lineLength) {
     if (!this.flow.setLineLength(lineLength)) return false;
-    this.place();
+    if (!this.deferred) this.place();
     return true;
   }
 

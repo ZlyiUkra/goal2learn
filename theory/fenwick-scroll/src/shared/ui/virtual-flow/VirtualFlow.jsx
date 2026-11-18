@@ -1,6 +1,7 @@
 import React from 'react';
 import { FlowLayout } from '@/shared/lib/flow-layout';
 import { SkylineLayout } from '@/shared/lib/skyline-layout';
+import { sliceJob } from '@/shared/lib/slice-job';
 import './VirtualFlow.css';
 
 // Віртуальний скрол елементів, розкладених лінійками.
@@ -31,6 +32,18 @@ import './VirtualFlow.css';
 // мозаїка має сталу ширину, вікно лише показує її частину і прокручується в усі чотири боки.
 // onRangeChange повідомляє, які лінійки видно, які лежать у DOM, скільки там елементів
 // і яку частину вмісту вікно показує поперек скролу (crossFrom..crossTo).
+//
+// Мозаїка (packed) будується частинами. Для мільйона елементів побудова триває від секунд
+// до хвилини, і одним шматком вона заморозила б сторінку: ні клік по меню, ні нове число
+// в полі не спрацювали б до її кінця. Тому розкладка мозаїки створюється з deferred: true,
+// а класти елементи компонент доручає sliceJob (shared/lib/slice-job): компонент
+// підписується на побудову і зберігає функцію відписки в jobRef.
+//   - Відписка зупиняє побудову. Вона спрацьовує, коли компонент зникає (інший режим, нова
+//     сторона), і перед кожною новою побудовою: стара вже не потрібна.
+//   - Поки побудова йде, розкладка лишається старою, а якір не ставиться: його поставлять,
+//     коли побудова закінчиться.
+//   - onBusyChange(true / false) повідомляє, що побудова почалась і закінчилась; на цей
+//     час сторінка показує поверх поля лоудер.
 export function VirtualFlow({
   count,
   estimateSize,
@@ -42,6 +55,7 @@ export function VirtualFlow({
   lineLength,
   overscan = 3,
   onRangeChange,
+  onBusyChange,
 }) {
   const [layout] = React.useState(() => {
     const sizes = Array.from({ length: count }, (_, i) => estimateSize(i));
@@ -50,6 +64,7 @@ export function VirtualFlow({
       sizes.map((size) => (horizontal ? size.height : size.width)),
       sizes.map((size) => (horizontal ? size.width : size.height)),
       Math.max(1, lineLength ?? (horizontal ? height : width)),
+      { deferred: true },
     );
   });
   // Розкладка змінюється на місці, і React цього не помічає. Лічильник version змушує
@@ -71,6 +86,30 @@ export function VirtualFlow({
   // Позиція, яку скрол отримав від самого компонента: подія scroll з цією позицією - не від людини.
   const ownScrollRef = React.useRef(null);
   const [itemNodes] = React.useState(() => new Set());
+
+  // Побудова мозаїки частинами: jobRef - функція відписки від поточної побудови, busy - чи вона йде.
+  const jobRef = React.useRef(null);
+  const [busy, setBusy] = React.useState(layout.deferred === true);
+  const startPlacing = React.useCallback(() => {
+    jobRef.current?.();
+    setBusy(true);
+    jobRef.current = sliceJob(() => layout.placeSteps()).subscribe(() => {
+      jobRef.current = null;
+      setBusy(false);
+    });
+  }, [layout]);
+
+  React.useEffect(() => {
+    if (layout.deferred) startPlacing();
+    return () => {
+      jobRef.current?.();
+      jobRef.current = null;
+    };
+  }, [layout, startPlacing]);
+
+  React.useEffect(() => {
+    onBusyChange?.(busy);
+  }, [busy, onBusyChange]);
 
   // Позиція скролу по головній осі і по обох осях.
   const readScroll = React.useCallback((box) => (horizontal ? box.scrollLeft : box.scrollTop), [horizontal]);
@@ -99,6 +138,7 @@ export function VirtualFlow({
       if (focusRef.current !== null) anchorRef.current = { focus: focusRef.current };
       else if (anchorRef.current === null) anchorRef.current = anchor;
       focusRef.current = null;
+      if (layout.deferred) startPlacing();
       rerender();
     });
     observerRef.current = observer;
@@ -107,7 +147,7 @@ export function VirtualFlow({
       observer.disconnect();
       observerRef.current = null;
     };
-  }, [layout, itemNodes, horizontal, readScroll, rerender]);
+  }, [layout, itemNodes, horizontal, readScroll, rerender, startPlacing]);
 
   // Колбек ref однаковий на всіх рендерах (useCallback). Тому React викликає його лише тоді,
   // коли елемент з'являється в DOM, а функцію очищення - коли елемент зникає.
@@ -145,9 +185,12 @@ export function VirtualFlow({
     if (wanted > 0 && wanted !== layout.lineLength) {
       if (anchorRef.current === null) anchorRef.current = layout.anchor(readScroll(box));
       layout.setLineLength(wanted);
+      if (layout.deferred) startPlacing();
       rerender();
       return;
     }
+    // Мозаїка ще будується: розкладка стара, тож якір чекає кінця побудови.
+    if (jobRef.current !== null) return;
     const anchor = anchorRef.current;
     if (anchor === null) return;
     anchorRef.current = null;

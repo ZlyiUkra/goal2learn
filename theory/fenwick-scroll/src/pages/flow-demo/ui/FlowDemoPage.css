@@ -50,6 +50,21 @@
   border-color: var(--color-accent);
 }
 
+.demo-reset {
+  align-self: flex-start;
+  padding: 3px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: 3px;
+  background: var(--color-page);
+  color: var(--color-accent);
+  font: italic 13px var(--font-text);
+  cursor: pointer;
+}
+
+.demo-reset:hover {
+  border-color: var(--color-accent);
+}
+
 .demo-count strong {
   color: var(--color-accent);
 }

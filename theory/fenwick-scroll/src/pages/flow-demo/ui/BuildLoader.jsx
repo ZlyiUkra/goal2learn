@@ -31,9 +31,10 @@ function Wheel({ period }) {
   );
 }
 
+// text - напис під кільцем.
 // overlay - лоудер стоїть поверх поля плиток, а не замість нього: так мозаїка, що лежить під ним,
-// зберігає прокрутку і збільшені плитки, поки перекладається під нові пропорції вікна.
-export function BuildLoader({ side, overlay = false }) {
+// зберігає прокрутку і збільшені плитки, поки перекладається.
+export function BuildLoader({ text, overlay = false }) {
   return (
     <div className={overlay ? 'demo-loading demo-loading-overlay' : 'stage demo-loading'} role="status">
       <span className="loader">
@@ -48,9 +49,7 @@ export function BuildLoader({ side, overlay = false }) {
           <Wheel period={1} />
         </span>
       </span>
-      <span>
-        {overlay ? 'Перекладаю мозаїку' : 'Будую поле'} {side} x {side} плиток...
-      </span>
+      <span>{text}</span>
     </div>
   );
 }

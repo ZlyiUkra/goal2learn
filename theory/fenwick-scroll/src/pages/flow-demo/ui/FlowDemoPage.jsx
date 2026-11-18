@@ -34,30 +34,12 @@ export function FlowDemoPage({ mode }) {
 
   // layoutFrame - вікно, з якого мозаїка "Скомбіновано" бере пропорції. Поки вікно тягнуть,
   // мозаїка не перекладається: для мільйона плиток це хвилина, а не мить. Коли край відпустили,
-  // поверх поля з'являється лоудер (relayout), і вже під ним мозаїка перекладається.
-  // В інших режимах ширина мозаїки від вікна не залежить, тому layoutFrame оновлюється одразу.
+  // layoutFrame наздоганяє frame, і мозаїка перекладається частинами під лоудером.
   const [layoutFrame, setLayoutFrame] = React.useState(demo.frame);
-  const [relayout, setRelayout] = React.useState(false);
-
-  const handleResizeEnd = () => {
-    const sameShape = frame.width * layoutFrame.height === frame.height * layoutFrame.width;
-    if (mode === 'combined' && !sameShape) setRelayout(true);
-    else setLayoutFrame(frame);
-  };
-
-  React.useEffect(() => {
-    if (!relayout) return undefined;
-    // Обидва оновлення в одному рендері: лоудер лишається на екрані, поки мозаїка перекладається.
-    return afterPaint(() => {
-      setLayoutFrame(frame);
-      setRelayout(false);
-    });
-  }, [relayout, frame]);
 
   const context = React.useMemo(
-    () => ({ side, frame, setFrame, layoutFrame, relayout, onResizeEnd: handleResizeEnd, buildMs, setBuildMs }),
-    // handleResizeEnd читає лише frame, layoutFrame і mode, тож оновлюється разом з ними.
-    [side, frame, layoutFrame, relayout, mode, buildMs],
+    () => ({ side, frame, setFrame, layoutFrame, onResizeEnd: () => setLayoutFrame(frame), buildMs, setBuildMs }),
+    [side, frame, layoutFrame, buildMs],
   );
 
   // builtMode - режим, для якого зараз будується поле плиток. Поки він не дорівнює mode з меню,
@@ -89,6 +71,16 @@ export function FlowDemoPage({ mode }) {
     }, demo.inputDelay);
   };
 
+  // Повертає сторону до початкової одразу, без очікування: поле з такою стороною будується швидко.
+  // Якщо зараз будується велика мозаїка, вона зникає разом зі старим полем, і її побудова
+  // зупиняється (відписка у VirtualFlow).
+  const handleSideReset = () => {
+    window.clearTimeout(timerRef.current);
+    setSideText(String(demo.defaultSide));
+    setSide(demo.defaultSide);
+    setWaiting(false);
+  };
+
   const { label, description } = modes.find(({ value }) => value === mode);
   // Скільки плиток буде: за числом у полі, якщо воно правильне, інакше за побудованим полем.
   const shownSide = parseSide(sideText) ?? side;
@@ -102,6 +94,9 @@ export function FlowDemoPage({ mode }) {
             <span>Сторона квадрата</span>
             <input type="number" min={1} max={demo.maxSide} value={sideText} onChange={handleSideChange} />
           </label>
+          <button type="button" className="demo-reset" onClick={handleSideReset}>
+            Скинути до {demo.defaultSide}
+          </button>
           <p className="demo-count">
             {shownSide} x {shownSide} = <strong>{shownSide * shownSide}</strong> плиток
           </p>
@@ -120,7 +115,7 @@ export function FlowDemoPage({ mode }) {
         <p className="demo-lead">{description}</p>
         <DemoContext value={context}>
           {waiting || switching ? (
-            <BuildLoader side={shownSide} />
+            <BuildLoader text={`Будую поле ${shownSide} x ${shownSide} плиток...`} />
           ) : mode === 'table' ? (
             <TableView key={side} />
           ) : (
